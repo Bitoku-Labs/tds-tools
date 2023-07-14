@@ -8,7 +8,7 @@ The scripts require `zsh` being installed.
 
 ## tds-merge.sh
 
-Merges multiple received stake accounts into one for easier maangement as well some (minor)
+Merges multiple received stake accounts into one for easier maangement as well as some (minor)
 savings in rent.
 
 ## tds-delegate.sh
