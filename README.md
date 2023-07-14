@@ -4,6 +4,8 @@ With Solana's TDS (Tour de Sun '22), you will get sent locked SOL in stake accou
 Sadly, most wallets don't support working with locked SOL (yet), so it's best to use the CLI
 to manage and stake the received rewards.
 
+The scripts require `zsh` being installed.
+
 ## tds-merge.sh
 
 Merges multiple received stake accounts into one for easier maangement as well some (minor)
