@@ -11,7 +11,11 @@ function psol { # Format lamports into a SOL string.
   printf "%'6d.%09d SOL" $((${1}/1000000000)) $((${1}%1000000000))
 }
 
-declare -A epacc # Associative array mapping activationEpoch to stake account index
+function expiry { # Format unixTimestamp as human-readable
+  date -Idate -r "${1}"
+}
+
+declare -A expacc # Associative array mapping unixTimestamp (of lockup expiry)  to stake account index
 STK=`solana stakes --withdraw-authority $TDS --output json`
 num=`jq ". | length" <<<"""$STK"""`
 echo "Found ${num} stake accounts."
@@ -21,26 +25,22 @@ stnew=0
 for i in {0..${last}}; do
   acc=`jq ".[${i}]" <<<"""$STK"""`
   stkacc=`jq -r ".stakePubkey" <<<"""$acc"""`
+  exp=`jq ".unixTimestamp" <<<"""$acc"""`
   if jq -e ".delegatedVoteAccountAddress" <<<"""$acc""" >/dev/null; then
     dstk=`jq ".delegatedStake" <<<"""$acc"""`
     epoch=`jq ".activationEpoch" <<<"""$acc"""`
-    echo "Found $(psol ${dstk}) in delegated stake account ${stkacc}, actEpoch ${epoch}."
+    echo "$(psol ${dstk}) in ${stkacc}, actEpoch ${epoch}, lockExp $(expiry ${exp})."
     stdone=$((${stdone}+${dstk}))
-    if [[ -v "epacc[$epoch]" ]]; then
-      echo "Merging with previous account."
-      merge "${stkacc}" "$epacc[$epoch]"
-    fi
-    epacc[$epoch]=${stkacc}
   else
     bal=`jq ".accountBalance" <<<"""$acc"""`
-    echo "Found $(psol ${bal}) in non-delegated stake account ${stkacc}."
+    echo "(psol ${bal}) non-deleg in ${stkacc}, lockExp $(expiry ${exp})."
     stnew=$((${stnew}+${bal}))
-    if [[ -v "epacc[none]" ]]; then
-      echo "Merging with previous account."
-      merge "${stkacc}" "$epacc[none]"
-    fi
-    epacc[none]=${stkacc}
   fi
+  if [[ -v "expacc[$exp]" ]]; then
+    echo "Merging with previous account."
+    merge "${stkacc}" "$expacc[$exp]"
+  fi
+  expacc[$exp]=${stkacc}
 done
 echo "  Already delegated: $(psol ${stdone})"
 echo "  Not yet delegated: $(psol ${stnew})"
