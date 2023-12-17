@@ -19,11 +19,20 @@ declare -A expacc # Associative array mapping unixTimestamp (of lockup expiry)  
 STK=`solana stakes --withdraw-authority $TDS --output json`
 num=`jq ". | length" <<<"""$STK"""`
 echo "Found ${num} stake accounts."
-last=$((${num}-1))
+last=${num}
 stdone=0
 stnew=0
-for i in {0..${last}}; do
-  acc=`jq ".[${i}]" <<<"""$STK"""`
+for i in {1..${last}}; do
+  a[$i]=`jq ".[$((i-1))]" <<<"""$STK"""`
+  sacc=`jq ".[$((i-1))]" <<<"""$STK"""`
+  e[$i]=`jq ".unixTimestamp" <<<"""$sacc"""`" $i"
+done
+se=(${(n)e})
+for i in {1..${last}}; do
+  idx=$se[$i]
+  elems=(${(@s/ /)idx})
+  accidx=$elems[2]
+  acc=$a[$accidx]
   stkacc=`jq -r ".stakePubkey" <<<"""$acc"""`
   exp=`jq ".unixTimestamp" <<<"""$acc"""`
   if jq -e ".delegatedVoteAccountAddress" <<<"""$acc""" >/dev/null; then
