@@ -1,7 +1,30 @@
 #!/usr/bin/env zsh
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Begin "Adapt for your purposes"
+#
+
+# The wallet address you use for TDS
 TDS=2pjCPLD8wpo1USrvCxmppiH6hbJo3yNypiQpDWayjrUg
+
+# The keypair for your TDS acount. Can be the filename of a json file, or something like 'usb://ledger?key=0'
 keypair='usb://ledger?key=0'
+
+# The vote account address of the validator to delegate to
 vali=6hZL2FZim27WkQccMfygvvXH2eow5u3wR6XUJHbMoeWP
+
+#
+# End "Adapt for your purposes"
+# ------------------------------------------------------------------------------------------------------------
+
+
+dflg=''
+mflg=''
+
+function usage {
+  printf 'Manage stake accounts in TDS wallet.\n\nUsage: tds [-d] [-m]\n    -d: Delegate all undelegated stake accounts to Xandeum validator.\n    -m: Merge stake accounts with equal lockup expiry\n'
+}
 
 function merge {
   solana merge-stake "$1" "$2" -k "$keypair"
@@ -14,6 +37,21 @@ function psol { # Format lamports into a SOL string.
 function expiry { # Format unixTimestamp as human-readable
   date -Idate -r "${1}"
 }
+
+while getopts 'dhm' flag; do
+  case "${flag}" in
+    d) dflg='true' ;;
+    h) hflg='true' ;;
+    m) mflg='true' ;;
+    *) usage
+       exit 1 ;;
+  esac
+done
+
+if [[ "${hflg}" == 'true' ]]; then
+  usage
+  exit 1
+fi
 
 declare -A expacc # Associative array mapping unixTimestamp (of lockup expiry)  to stake account index
 STK=`solana stakes --withdraw-authority $TDS --output json`
@@ -43,10 +81,13 @@ for i in {1..${last}}; do
   else
     bal=`jq ".accountBalance" <<<"""$acc"""`
     echo "(psol ${bal}) non-deleg in ${stkacc}, lockExp $(expiry ${exp})."
+    if [[ "${dflg}" == 'true' ]]; then
+      solana delegate-stake "${stkacc}" "${vali}" --stake-authority "${keypair}"
+    fi
     stnew=$((${stnew}+${bal}))
   fi
-  if [[ -v "expacc[$exp]" ]]; then
-    echo "Merging with previous account."
+  if [[ "${mflg}" == 'true' && -v "expacc[$exp]" ]]; then
+    echo "Merging with $expacc[$exp], which has identical lockup expiry."
     merge "${stkacc}" "$expacc[$exp]"
   fi
   expacc[$exp]=${stkacc}
