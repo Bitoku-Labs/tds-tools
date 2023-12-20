@@ -25,11 +25,11 @@ vali=6hZL2FZim27WkQccMfygvvXH2eow5u3wR6XUJHbMoeWP
 
 Lists all your stake accounts, whith amounts and lockup expiry, sorted by lockup expiry.
 
-# -d option
+### -d option
 
 Will delegate any undelegated stake accounts to your validator.
 
-# - m option
+### - m option
 
 Will merge stake accoumnts with equal lockup expiry, to give you a neater overview of things.
 
