@@ -80,7 +80,7 @@ for i in {1..${last}}; do
     stdone=$((${stdone}+${dstk}))
   else
     bal=`jq ".accountBalance" <<<"""$acc"""`
-    echo "(psol ${bal}) non-deleg in ${stkacc}, lockExp $(expiry ${exp})."
+    echo "$(psol ${bal}) non-deleg in ${stkacc}, lockExp $(expiry ${exp})."
     if [[ "${dflg}" == 'true' ]]; then
       solana delegate-stake "${stkacc}" "${vali}" --stake-authority "${keypair}"
     fi
