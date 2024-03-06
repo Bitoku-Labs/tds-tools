@@ -35,7 +35,11 @@ function psol { # Format lamports into a SOL string.
 }
 
 function expiry { # Format unixTimestamp as human-readable
-  date -Idate -r "${1}"
+  if [[ "$1" == "null" ]]; then
+    echo "None"
+  else
+    date -Idate -r "${1}"
+  fi
 }
 
 while getopts 'dhm' flag; do
